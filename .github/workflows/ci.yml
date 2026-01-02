@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'html-cleaning/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'html-cleaning/**'
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [stable, beta, 1.75.0]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: html-cleaning
+      - name: Run tests (default features)
+        working-directory: html-cleaning
+        run: cargo test
+      - name: Run tests (all features)
+        working-directory: html-cleaning
+        run: cargo test --all-features
+      - name: Run tests (no default features)
+        working-directory: html-cleaning
+        run: cargo test --no-default-features
+
+  features:
+    name: Feature Combinations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: html-cleaning
+      - name: Check no default features
+        working-directory: html-cleaning
+        run: cargo check --no-default-features
+      - name: Check presets only
+        working-directory: html-cleaning
+        run: cargo check --no-default-features --features presets
+      - name: Check regex only
+        working-directory: html-cleaning
+        run: cargo check --no-default-features --features regex
+      - name: Check url only
+        working-directory: html-cleaning
+        run: cargo check --no-default-features --features url
+      - name: Check markdown only
+        working-directory: html-cleaning
+        run: cargo check --no-default-features --features markdown
+      - name: Check full features
+        working-directory: html-cleaning
+        run: cargo check --all-features
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: html-cleaning
+      - name: Clippy (default features)
+        working-directory: html-cleaning
+        run: cargo clippy -- -D warnings
+      - name: Clippy (all features)
+        working-directory: html-cleaning
+        run: cargo clippy --all-features -- -D warnings
+
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Check formatting
+        working-directory: html-cleaning
+        run: cargo fmt --all -- --check
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: html-cleaning
+      - name: Build docs
+        working-directory: html-cleaning
+        run: cargo doc --no-deps --all-features
+        env:
+          RUSTDOCFLAGS: -D warnings
+
+  msrv:
+    name: Minimum Supported Rust Version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.75"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: html-cleaning
+      - name: Check MSRV
+        working-directory: html-cleaning
+        run: cargo check --all-features
