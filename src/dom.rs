@@ -39,10 +39,9 @@ pub fn direct_text(sel: &Selection) -> String {
         .map(|node| {
             node.children()
                 .into_iter()
-                .filter(|child| child.is_text())
+                .filter(dom_query::NodeRef::is_text)
                 .map(|text_node| text_node.text().to_string())
-                .collect::<Vec<_>>()
-                .join("")
+                .collect::<String>()
         })
         .unwrap_or_default()
 }

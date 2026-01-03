@@ -30,7 +30,6 @@
 //! - **Text Normalization**: Collapse whitespace, trim text
 //! - **Link Processing**: Make URLs absolute, filter links
 //! - **Content Deduplication**: LRU-based duplicate detection
-//! - **Markdown Output**: Convert HTML to Markdown with structure preservation
 //! - **Presets**: Ready-to-use configurations for common scenarios
 //!
 //! # Feature Flags
@@ -40,7 +39,6 @@
 //! | `presets` | Yes | Include prebuilt cleaning configurations |
 //! | `regex` | No | Enable regex-based selectors |
 //! | `url` | No | Enable URL processing with the `url` crate |
-//! | `markdown` | No | Enable HTML to Markdown conversion |
 //! | `full` | No | Enable all features |
 //!
 //! # Modules
@@ -52,7 +50,6 @@
 //! - [`dedup`] - Content deduplication
 //! - [`presets`] - Ready-to-use cleaning configurations (feature: `presets`)
 //! - [`links`] - URL and link processing (feature: `url`)
-//! - [`markdown`] - HTML to Markdown conversion (feature: `markdown`)
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
@@ -75,8 +72,6 @@ pub mod presets;
 // When disabled, it uses simple string-based fallbacks.
 pub mod links;
 
-#[cfg(feature = "markdown")]
-pub mod markdown;
 
 // Re-export core types
 pub use cleaner::HtmlCleaner;

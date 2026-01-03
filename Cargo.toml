@@ -1,6 +1,6 @@
 [package]
 name = "html-cleaning"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.75"
 authors = ["rs-trafilatura contributors"]
@@ -24,8 +24,7 @@ default = ["presets"]
 presets = []
 regex = ["dep:regex"]
 url = ["dep:url"]
-markdown = []
-full = ["presets", "regex", "url", "markdown"]
+full = ["presets", "regex", "url"]
 
 [dependencies]
 dom_query = "0.24"

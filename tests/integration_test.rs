@@ -204,34 +204,3 @@ mod preset_tests {
     }
 }
 
-#[cfg(feature = "markdown")]
-mod markdown_tests {
-    use html_cleaning::markdown::html_to_markdown;
-
-    #[test]
-    fn test_complex_document() {
-        let html = r#"
-            <h1>Article Title</h1>
-            <p>Introduction with <strong>bold</strong> and <em>italic</em> text.</p>
-            <h2>Section One</h2>
-            <p>Content with a <a href="https://example.com">link</a>.</p>
-            <ul>
-                <li>Point one</li>
-                <li>Point two</li>
-            </ul>
-            <blockquote>A famous quote</blockquote>
-            <pre><code>fn main() {}</code></pre>
-        "#;
-
-        let md = html_to_markdown(html);
-
-        assert!(md.contains("# Article Title"));
-        assert!(md.contains("## Section One"));
-        assert!(md.contains("**bold**"));
-        assert!(md.contains("*italic*"));
-        assert!(md.contains("[link](https://example.com)"));
-        assert!(md.contains("- Point one"));
-        assert!(md.contains("> A famous quote"));
-        assert!(md.contains("```"));
-    }
-}
