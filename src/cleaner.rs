@@ -63,9 +63,10 @@ impl HtmlCleaner {
     /// 1. Remove tags (with children)
     /// 2. Strip tags (keep children)
     /// 3. Remove by CSS selector
-    /// 4. Prune empty elements
-    /// 5. Normalize whitespace
-    /// 6. Clean attributes
+    /// 4. Remove HTML comments
+    /// 5. Prune empty elements
+    /// 6. Normalize whitespace
+    /// 7. Clean attributes
     pub fn clean(&self, doc: &Document) {
         // 1. Remove tags
         if !self.options.tags_to_remove.is_empty() {
@@ -84,19 +85,50 @@ impl HtmlCleaner {
             self.remove_by_selector(doc, selector);
         }
 
-        // 4. Prune empty
+        // 4. Remove HTML comments
+        if self.options.remove_comments {
+            self.remove_comments(doc);
+        }
+
+        // 5. Prune empty
         if self.options.prune_empty {
             self.prune_empty(doc);
         }
 
-        // 5. Normalize whitespace
+        // 6. Normalize whitespace
         if self.options.normalize_whitespace {
             self.normalize_text(doc);
         }
 
-        // 6. Clean attributes
+        // 7. Clean attributes
         if self.options.strip_attributes {
             self.clean_attributes(doc);
+        }
+    }
+
+    /// Remove HTML comment nodes from the document.
+    ///
+    /// Walks the entire DOM tree and removes all comment nodes (`<!-- ... -->`).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use html_cleaning::HtmlCleaner;
+    /// use dom_query::Document;
+    ///
+    /// let cleaner = HtmlCleaner::new();
+    /// let doc = Document::from("<div><!-- comment --><p>Content</p></div>");
+    /// cleaner.remove_comments(&doc);
+    /// ```
+    pub fn remove_comments(&self, doc: &Document) {
+        // Walk all nodes and collect comment nodes
+        let body = doc.select("*");
+        for node in body.nodes() {
+            for child in node.children() {
+                if child.is_comment() {
+                    child.remove_from_parent();
+                }
+            }
         }
     }
 
@@ -330,6 +362,29 @@ mod tests {
         let text = doc.select("div").text();
         assert!(text.contains("Hello"), "Text 'Hello' should be preserved");
         assert!(text.contains("World"), "Text 'World' should be preserved");
+    }
+
+    #[test]
+    fn test_remove_comments() {
+        let cleaner = HtmlCleaner::new();
+        let doc = Document::from("<div><!-- This is a comment --><p>Content</p><!-- Another --></div>");
+        cleaner.remove_comments(&doc);
+        let html = doc.select("div").html().to_string();
+        assert!(!html.contains("comment"), "Comments should be removed: {html}");
+        assert!(html.contains("Content"), "Content should be preserved");
+    }
+
+    #[test]
+    fn test_clean_with_comments_option() {
+        let options = CleaningOptions {
+            remove_comments: true,
+            ..Default::default()
+        };
+        let cleaner = HtmlCleaner::with_options(options);
+        let doc = Document::from("<div><!-- comment --><p>Text</p></div>");
+        cleaner.clean(&doc);
+        let html = doc.select("div").html().to_string();
+        assert!(!html.contains("comment"));
     }
 
     #[test]

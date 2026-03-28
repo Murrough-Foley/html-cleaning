@@ -41,6 +41,9 @@ pub struct CleaningOptions {
     /// Normalize whitespace in text nodes.
     pub normalize_whitespace: bool,
 
+    /// Remove HTML comment nodes (`<!-- ... -->`).
+    pub remove_comments: bool,
+
     /// Remove all attributes from elements.
     pub strip_attributes: bool,
 
@@ -110,6 +113,13 @@ impl CleaningOptionsBuilder {
     #[must_use]
     pub fn normalize_whitespace(mut self, enabled: bool) -> Self {
         self.options.normalize_whitespace = enabled;
+        self
+    }
+
+    /// Enable HTML comment removal.
+    #[must_use]
+    pub fn remove_comments(mut self, enabled: bool) -> Self {
+        self.options.remove_comments = enabled;
         self
     }
 

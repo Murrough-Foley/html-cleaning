@@ -181,6 +181,83 @@ pub fn article_extraction() -> CleaningOptions {
     }
 }
 
+/// Trafilatura-compatible cleaning preset.
+///
+/// Matches the tag removal, stripping, and pruning behavior used by
+/// rs-trafilatura for web content extraction. Removes 50 non-content tags,
+/// strips 18 wrapper tags, and prunes 22 tag types when empty.
+///
+/// This preset handles pure HTML cleaning only — extraction-specific logic
+/// (link density analysis, boilerplate detection, content scoring) is NOT
+/// included and should be handled by the extraction pipeline.
+///
+/// Removes:
+/// - Script/style/noscript, forms, iframes, embeds, media elements
+/// - Navigation, footer, aside, menus
+/// - UI elements (buttons, inputs, selects, dialogs)
+/// - Non-content elements (applet, marquee, math, svg, canvas)
+///
+/// Strips (keeps children):
+/// - Wrapper/formatting tags: abbr, acronym, address, bdi, bdo, big, cite,
+///   data, dfn, font, hgroup, img, ins, mark, meta, ruby, small, template
+///
+/// Prunes empty:
+/// - p, div, span, h1-h6, blockquote, article, section, main, li, dd, dt,
+///   em, i, b, strong, pre, q
+///
+/// Also: removes HTML comments, normalizes whitespace.
+///
+/// # Example
+///
+/// ```
+/// use html_cleaning::{HtmlCleaner, presets};
+///
+/// let cleaner = HtmlCleaner::with_options(presets::trafilatura());
+/// ```
+#[must_use]
+pub fn trafilatura() -> CleaningOptions {
+    CleaningOptions {
+        tags_to_remove: vec![
+            // Important
+            "aside".into(), "embed".into(), "footer".into(), "form".into(),
+            "head".into(), "iframe".into(), "menu".into(), "object".into(),
+            "script".into(),
+            // Other content
+            "applet".into(), "audio".into(), "canvas".into(), "figure".into(),
+            "map".into(), "picture".into(), "svg".into(), "video".into(),
+            // Secondary
+            "area".into(), "blink".into(), "button".into(), "datalist".into(),
+            "dialog".into(), "frame".into(), "frameset".into(), "fieldset".into(),
+            "link".into(), "input".into(), "ins".into(), "label".into(),
+            "legend".into(), "marquee".into(), "math".into(), "menuitem".into(),
+            "nav".into(), "noscript".into(), "optgroup".into(), "option".into(),
+            "output".into(), "param".into(), "progress".into(), "rp".into(),
+            "rt".into(), "rtc".into(), "select".into(), "source".into(),
+            "style".into(), "track".into(), "textarea".into(), "time".into(),
+            "use".into(),
+        ],
+        tags_to_strip: vec![
+            "abbr".into(), "acronym".into(), "address".into(), "bdi".into(),
+            "bdo".into(), "big".into(), "cite".into(), "data".into(),
+            "dfn".into(), "font".into(), "hgroup".into(), "img".into(),
+            "ins".into(), "mark".into(), "meta".into(), "ruby".into(),
+            "small".into(), "template".into(),
+        ],
+        prune_empty: true,
+        empty_tags: vec![
+            "p".into(), "div".into(), "span".into(),
+            "h1".into(), "h2".into(), "h3".into(), "h4".into(), "h5".into(), "h6".into(),
+            "blockquote".into(), "article".into(), "section".into(), "main".into(),
+            "li".into(), "dd".into(), "dt".into(),
+            "em".into(), "i".into(), "b".into(), "strong".into(),
+            "pre".into(), "q".into(),
+        ],
+        normalize_whitespace: true,
+        remove_comments: true,
+        ..Default::default()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -213,5 +290,20 @@ mod tests {
         let opts = article_extraction();
         assert!(!opts.selectors_to_remove.is_empty());
         assert!(opts.tags_to_strip.contains(&"span".to_string()));
+    }
+
+    #[test]
+    fn test_trafilatura_preset() {
+        let opts = trafilatura();
+        assert_eq!(opts.tags_to_remove.len(), 50);
+        assert_eq!(opts.tags_to_strip.len(), 18);
+        assert_eq!(opts.empty_tags.len(), 22);
+        assert!(opts.prune_empty);
+        assert!(opts.normalize_whitespace);
+        assert!(opts.remove_comments);
+        assert!(opts.tags_to_remove.contains(&"script".to_string()));
+        assert!(opts.tags_to_remove.contains(&"nav".to_string()));
+        assert!(opts.tags_to_strip.contains(&"font".to_string()));
+        assert!(opts.empty_tags.contains(&"blockquote".to_string()));
     }
 }
